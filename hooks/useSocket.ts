@@ -1,29 +1,29 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 
 export function useSocket() {
-  // used ref to not to trigger re-render
-  const socketRef = useRef<Socket | null>(null)
+  const [socket, setSocket] = useState<Socket | null>(null)
+  const [connected, setConnected] = useState(false)
 
   useEffect(() => {
-    socketRef.current = io('http://localhost:4000')
+    const socketIo = io('http://localhost:4000')
 
-    socketRef.current.on('connect', () => {
+    socketIo.on('connect', () => {
       console.log('Connected to WebSocket server')
+      setConnected(true)
     })
 
-    socketRef.current.on('disconnect', () => {
+    socketIo.on('disconnect', () => {
       console.log('Disconnected from WebSocket server')
+      setConnected(false)
     })
 
-    socketRef.current.on('message', (data) => {
-      console.log('Message from server:', data)
-    })
+    setSocket(socketIo)
 
     return () => {
-      socketRef.current?.disconnect()
+      socketIo.disconnect()
     }
   }, [])
 
-  return socketRef.current
+  return { socket, connected }
 }
